@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Vollständiges technisches Handbuch für Kimi K2.5: Vision-Limits, File-Uploads, Rate-Limits, Retry-Strategien und Modell-Konfiguration für wissenschaftliche Forschung">
+    
+    <title>Research OS Technical | Complete Specs & Limits</title>
+    
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface-light: #1f2937;
+            --surface-hover: #374151;
+            --primary: #3b82f6;
+            --primary-dim: rgba(59, 130, 246, 0.1);
+            --secondary: #8b5cf6;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border: #374151;
+            --shadow: rgba(0, 0, 0, 0.5);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="light"] {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-light: #f1f5f9;
+            --surface-hover: #e2e8eb;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8eb;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            padding: 0.5rem 1rem;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 56px;
+        }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .btn-icon {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            color: var(--text);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 1rem;
+            right: 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.5rem;
+            z-index: 999;
+            box-shadow: 0 20px 40px var(--shadow);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active { display: block; animation: slideDown 0.2s ease; }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .mobile-menu a {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .mobile-menu a:hover, .mobile-menu a.active {
+            background: var(--primary-dim);
+            color: var(--primary);
+        }
+
+        .desktop-nav { display: none; gap: 0.25rem; list-style: none; }
+
+        .desktop-nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+
+        .desktop-nav a:hover, .desktop-nav a.active {
+            color: var(--primary);
+            background: var(--surface-light);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 80px 1rem 2rem;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 2rem 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .badge-group {
+            display: flex;
+            gap: 0.4rem;
+            justify-content: center;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid;
+        }
+
+        .badge-tech { background: rgba(6, 182, 212, 0.1); color: var(--accent); border-color: var(--accent); }
+
+        .section {
+            margin-bottom: 2.5rem;
+            scroll-margin-top: 70px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+        }
+
+        .section-title h2 {
+            font-size: 1.25rem;
+            margin-bottom: 0.1rem;
+        }
+
+        .section-title .subtitle {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.875rem 1rem;
+            cursor: pointer;
+            background: var(--surface);
+            transition: var(--transition);
+        }
+
+        .card-header:hover { background: var(--surface-hover); }
+
+        .card-header h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .card-content {
+            display: none;
+            padding: 0 1rem 1rem;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .card.expanded .card-content { display: block; }
+
+        .expand-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .card.expanded .expand-btn { transform: rotate(180deg); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.1rem 0.4rem;
+            background: var(--surface-light);
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-left: 0.4rem;
+            font-family: monospace;
+        }
+
+        .tag.limit { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .tag.warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+
+        .card ul {
+            list-style: none;
+            margin-top: 0.5rem;
+        }
+
+        .card li {
+            padding: 0.6rem 0;
+            padding-left: 1.25rem;
+            position: relative;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border);
+            line-height: 1.5;
+        }
+
+        .card li:last-child { border-bottom: none; }
+
+        .card li::before {
+            content: "›";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .highlight { color: var(--primary); font-weight: 600; }
+        .code { font-family: 'SF Mono', monospace; background: var(--bg); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.85em; border: 1px solid var(--border); }
+
+        .spec-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin: 0.75rem 0;
+        }
+
+        .spec-item {
+            background: var(--surface-light);
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .spec-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .spec-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .code-block {
+            background: #020617;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 0.75rem 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-label {
+            color: var(--accent);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        .copy-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: var(--transition);
+        }
+
+        .copy-btn.copied { background: var(--success); color: white; border-color: var(--success); }
+
+        pre {
+            padding: 0.75rem;
+            overflow-x: auto;
+            font-family: 'SF Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: #e2e8f0;
+            white-space: pre-wrap;
+        }
+
+        .comment { color: #64748b; font-style: italic; }
+        .keyword { color: #c084fc; }
+
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--warning);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.75rem 0;
+            font-size: 0.85rem;
+        }
+
+        .error-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.75rem 0;
+            font-size: 0.85rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        @media (min-width: 640px) {
+            .grid-2 { grid-template-columns: 1fr 1fr; }
+            .desktop-nav { display: flex; }
+            .menu-btn { display: none; }
+            .hero h1 { font-size: 2.2rem; }
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="nav">
+    <div class="nav-container">
+        <div class="logo">🔬 Research OS</div>
+        <div class="nav-controls">
+            <button class="btn-icon" onclick="toggleTheme()" title="Theme">◐</button>
+            <button class="btn-icon menu-btn" onclick="toggleMenu()">☰</button>
+            <ul class="desktop-nav">
+                <li><a href="#vision">Vision</a></li>
+                <li><a href="#files">Files</a></li>
+                <li><a href="#limits">Limits</a></li>
+                <li><a href="#retry">Retry</a></li>
+                <li><a href="#cli">CLI</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+    <a href="#vision" onclick="closeMenu()">🖼️ Vision Limits</a>
+    <a href="#files" onclick="closeMenu()">📁 File Uploads</a>
+    <a href="#limits" onclick="closeMenu()">🚦 Rate Limits</a>
+    <a href="#retry" onclick="closeMenu()">🔄 Retry Logic</a>
+    <a href="#cli" onclick="closeMenu()">💻 CLI Specs</a>
+</div>
+
+<div class="container">
+    
+    <div class="hero">
+        <h1>Technical Specifications<br>& Hard Limits</h1>
+        <p>Die vollständige technische Referenz: Vision-Constraints, File-Limits, Timeouts und Retry-Strategien für produktive wissenschaftliche Workflows.</p>
+        <div class="badge-group">
+            <span class="badge badge-tech">4K Vision</span>
+            <span class="badge badge-tech">100MB Files</span>
+            <span class="badge badge-tech">5min Timeout</span>
+        </div>
+    </div>
+
+    <!-- VISION LIMITS -->
+    <section id="vision" class="section">
+        <div class="section-header">
+            <div class="section-icon">🖼️</div>
+            <div class="section-title">
+                <h2>Vision & Multimodal Limits</h2>
+                <div class="subtitle">Bilder, Videos und technische Constraints</div>
+            </div>
+        </div>
+
+        <div class="card expanded">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>🖼️ Bild-Spezifikationen</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <div class="spec-label">Max Auflösung</div>
+                        <div class="spec-value">4K (4096×2160)</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Empfohlen</div>
+                        <div class="spec-value">≤ 1080p</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Formate</div>
+                        <div class="spec-value">PNG, JPEG, WebP, GIF</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Max Größe</div>
+                        <div class="spec-value">100MB (Request Body)</div>
+                    </div>
+                </div>
+                <div class="warning-box">
+                    <strong>⚠️ Wichtig:</strong> Höhere Auflösungen als 4K erhöhen nur die Verarbeitungszeit, nicht die Qualität. Bilder werden intern herunterskaliert.
+                </div>
+                <ul>
+                    <li><span class="highlight">Keine URLs:</span> Nur Base64-Encoding oder File-Upload (keine HTTP-Links)</li>
+                    <li><span class="highlight">Anzahl:</span> Keine feste Begrenzung, aber Gesamt-Request ≤ 100MB</li>
+                    <li><span class="highlight">Token-Kosten:</span> Dynamisch basierend auf Auflösung (höher = teurer)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card expanded">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>🎥 Video-Spezifikationen</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <div class="spec-label">Max Auflösung</div>
+                        <div class="spec-value">2K (2048×1080)</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Formate</div>
+                        <div class="spec-value">MP4, MOV, AVI, WebM, WMV, 3GPP</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Verarbeitung</div>
+                        <div class="spec-value">Keyframe-Extraktion</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Große Files</div>
+                        <div class="spec-value">File Upload API nutzen</div>
+                    </div>
+                </div>
+                <div class="error-box">
+                    <strong>🚫 Limit:</strong> Videos >100MB müssen über die File Upload API hochgeladen werden (nicht Base64 inline).
+                </div>
+                <ul>
+                    <li>Video wird in Keyframes zerlegt (temporal merge kernel)</li>
+                    <li>Token-Verbrauch abhängig von Anzahl Keyframes × Auflösung</li>
+                    <li>Timestamps werden erkannt und können referenziert werden</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- FILE UPLOADS -->
+    <section id="files" class="section">
+        <div class="section-header">
+            <div class="section-icon">📁</div>
+            <div class="section-title">
+                <h2>File Upload Limits</h2>
+                <div class="subtitle">Speicher, Formate und OCR-Verhalten</div>
+            </div>
+        </div>
+
+        <div class="card expanded">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>💾 Speicher-Limits (Pro User)</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <div class="spec-label">Max Files</div>
+                        <div class="spec-value">1,000 Dateien</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Max pro File</div>
+                        <div class="spec-value">100 MB</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Gesamtspeicher</div>
+                        <div class="spec-value">10 GB</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Lebensdauer</div>
+                        <div class="spec-value">Bis Löschung</div>
+                    </div>
+                </div>
+                <div class="warning-box">
+                    <strong>⚠️ Hinweis:</strong> Wenn das Limit erreicht ist, müssen alte Dateien gelöscht werden, bevor neue hochgeladen werden können.
+                </div>
+            </div>
+        </div>
+
+        <div class="card expanded">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>📄 Unterstützte Formate</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li><span class="highlight">Dokumente:</span> PDF, TXT, CSV, DOC/DOCX, XLS/XLSX, PPT/PPTX, EPUB, MOBI</li>
+                    <li><span class="highlight">Code:</span> PY, JS, TS, GO, JAVA, C, CPP, CS, PHP, HTML, CSS, YAML, JSON</li>
+                    <li><span class="highlight">Bilder (OCR):</span> JPEG, PNG, BMP, GIF, SVG, WebP, TIFF, AVIF</li>
+                    <li><span class="highlight">Markup:</span> MD (Markdown), LOG, CONF, INI</li>
+                </ul>
+                <div class="error-box">
+                    <strong>🚫 OCR-Limitation:</strong> Bei Bildern wird nur Text extrahiert (OCR). Bilder ohne Text führen zu Parsing-Fehlern. Für reine Bildanalyse (z.B. Gele) Vision API nutzen, nicht File Upload.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- RATE LIMITS -->
+    <section id="limits" class="section">
+        <div class="section-header">
+            <div class="section-icon">🚦</div>
+            <div class="section-title">
+                <h2>Rate Limits & Timeouts</h2>
+                <div class="subtitle">API-Quotas und zeitliche Limits</div>
+            </div>
+        </div>
+
+        <div class="card expanded">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>⏱️ Timeouts</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <div class="spec-label">API Timeout</div>
+                        <div class="spec-value">2 Stunden</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Shell Timeout (CLI)</div>
+                        <div class="spec-value">5 Minuten (300s)</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Empfohlen</div>
+                        <div class="spec-value">stream=true</div>
+                    </div>
+                </div>
+                <div class="warning-box">
+                    <strong>💡 Best Practice:</strong> Bei <code class="code">stream=false</code> können Firewalls/ISPs die Verbindung vorzeitig trennen. Immer <code class="code">stream=true</code> verwenden für lange Outputs!
+                </div>
+            </div>
+        </div>
+
+        <div class="card expanded">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>🚦 Rate Limits (API)</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 0.75rem 0;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <th style="text-align: left; padding: 0.5rem; color: var(--text-muted);">Limit</th>
+                            <th style="text-align: left; padding: 0.5rem; color: var(--text-muted);">Free Tier</th>
+                            <th style="text-align: left; padding: 0.5rem; color: var(--text-muted);">Paid Tier</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 0.5rem;">Requests/Minute</td>
+                            <td style="padding: 0.5rem;">60</td>
+                            <td style="padding: 0.5rem;">120</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 0.5rem;">Tokens/Minute</td>
+                            <td style="padding: 0.5rem;">150K</td>
+                            <td style="padding: 0.5rem;">500K</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.5rem;">Concurrency</td>
+                            <td style="padding: 0.5rem;">Niedrig</td>
+                            <td style="padding: 0.5rem;">Erhöht</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="error-box">
+                    <strong>🚨 HTTP 429:</strong> Bei Rate-Limit-Überschreitung wird <code class="code">Retry-After</code> Header gesendet. Diesen unbedingt beachten!
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- RETRY STRATEGIES -->
+    <section id="retry" class="section">
+        <div class="section-header">
+            <div class="section-icon">🔄</div>
+            <div class="section-title">
+                <h2>Retry & Error Handling</h2>
+                <div class="subtitle">Stabile Workflows trotz Limits</div>
+            </div>
+        </div>
+
+        <div class="card expanded">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>🔧 Built-in Retry (Kimi CLI)</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li>Kimi CLI hat <span class="highlight">integrierte Retry-Logik</span> (automatisch)</li>
+                    <li>Variable <code class="code">CHAOS_RETRY_AFTER</code> für Testing</li>
+                    <li>Exponential Backoff bei 429/503 Errors</li>
+                    <li>Max 3 Retries standardmäßig</li>
+                </ul>
+                <div class="warning-box">
+                    <strong>Manuelles Retry nicht nötig</strong> – der CLI handled Rate Limits selbstständig. Bei eigenem API-Client implementieren.
+                </div>
+            </div>
+        </div>
+
+        <div class="card expanded">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>⚡ Best Practices</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li><span class="highlight">Jitter:</span> 100-250ms Delay zwischen Calls (verhindert Burst-Detection)</li>
+                    <li><span class="highlight">Batching:</span> Mehrere kleine Requests zu einem großen bündeln (weniger Overhead)</li>
+                    <li><span class="highlight">Caching:</span> Gleiche Prompts nicht wiederholen (lokaler Cache)</li>
+                    <li><span class="highlight">Checkpointing:</strong> Alle 50-100 Items speichern (bei langen Workflows)</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-label">Python Retry Pattern</span>
+                        <button class="copy-btn" onclick="copy(this)">📋</button>
+                    </div>
+                    <pre>import time
+import random
+
+def api_call_with_retry(func, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return func()
+        except RateLimitError as e:
+            retry_after = int(e.headers.get('Retry-After', 60))
+            # Exponential backoff with jitter
+            sleep_time = retry_after + random.uniform(0, 5)
+            time.sleep(sleep_time)
+    raise Exception("Max retries exceeded")</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CLI SPECS -->
+    <section id="cli" class="section">
+        <div class="section-header">
+            <div class="section-icon">💻</div>
+            <div class="section-title">
+                <h2>Kimi CLI Runtime Specs</h2>
+                <div class="subtitle">Technische Details der Code-Ausführung</div>
+            </div>
+        </div>
+
+        <div class="card expanded">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>🛠️ Tool System Limits</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <div class="spec-label">File Read</div>
+                        <div class="spec-value">100 KB max</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Lines</div>
+                        <div class="spec-value">1,000 max</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Line Length</div>
+                        <div class="spec-value">2,000 chars</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Shell Timeout</div>
+                        <div class="spec-value">300s (5min)</div>
+                    </div>
+                </div>
+                <ul>
+                    <li><span class="highlight">File Operations:</span> ReadFile, WriteFile, Glob, Grep, StrReplaceFile</li>
+                    <li><span class="highlight">Shell:</span> Streaming Output (stdout/stderr in Echtzeit)</li>
+                    <li><span class="highlight">Security:</span> Absolute Pfade erforderlich (kein Path Traversal)</li>
+                    <li><span class="highlight">Approval:</span> Shell-Befehle erfordern User-Approval (außer <code class="code">--yolo</code> mode)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card expanded">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>🤖 Sub-Agent System</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li><span class="highlight">Task Delegation:</span> Sub-Agenten für parallele Aufgaben</li>
+                    <li><span class="highlight">Todo-Listen:</span> SetTodoList für Workflow-Management</li>
+                    <li><span class="highlight">Zustand:</span> Jeder Sub-Agent hat isolierten Kontext</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-label">Sub-Agent Call</span>
+                        <button class="copy-btn" onclick="copy(this)">📋</button>
+                    </div>
+                    <pre>Task(
+    description="Analyze src/ structure",
+    subagent_name="coder",
+    prompt="Analyze /src directory, summarize modules"
+)</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>Research OS Technical Specifications | Kimi K2.5</p>
+        <p style="margin-top: 0.5rem; opacity: 0.7;">Specs basierend auf Moonshot AI Platform Docs & HuggingFace Repositories</p>
+    </footer>
+
+</div>
+
+<script>
+    function toggleTheme() {
+        const html = document.documentElement;
+        const current = html.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+    }
+
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+
+    function toggleMenu() {
+        document.getElementById('mobileMenu').classList.toggle('active');
+    }
+
+    function closeMenu() {
+        document.getElementById('mobileMenu').classList.remove('active');
+    }
+
+    function toggleCard(header) {
+        header.parentElement.classList.toggle('expanded');
+    }
+
+    function copy(btn) {
+        const container = btn.closest('.code-block');
+        const text = container.querySelector('pre').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const orig = btn.textContent;
+            btn.textContent = '✓';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = orig;
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('mobileMenu');
+        const btn = document.querySelector('.menu-btn');
+        if (menu.classList.contains('active') && !menu.contains(e.target) && !btn.contains(e.target)) {
+            menu.classList.remove('active');
+        }
+    });
+</script>
+
+</body>
+</html>
