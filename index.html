@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
+    <title>Research OS | Kimi K2.5 Guide</title>
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface-light: #1f2937;
+            --primary: #3b82f6;
+            --primary-dim: rgba(59, 130, 246, 0.1);
+            --secondary: #8b5cf6;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border: #374151;
+            --transition: all 0.3s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+        
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0;
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            padding: 0.5rem;
+        }
+        .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 50px; }
+        .logo { font-size: 1.1rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .menu-btn { background: var(--surface-light); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; }
+        
+        .mobile-menu {
+            display: none; position: fixed; top: 60px; left: 0.5rem; right: 0.5rem;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            padding: 0.5rem; z-index: 999; max-height: 80vh; overflow-y: auto;
+        }
+        .mobile-menu.active { display: block; }
+        .mobile-menu a { display: block; padding: 0.75rem; color: var(--text); text-decoration: none; border-radius: 8px; font-size: 0.9rem; border-bottom: 1px solid var(--border); }
+        .mobile-menu a:last-child { border-bottom: none; }
+        .mobile-menu a:hover { background: var(--primary-dim); color: var(--primary); }
+        
+        .container { max-width: 900px; margin: 0 auto; padding: 70px 1rem 2rem; }
+        
+        .hero { text-align: center; padding: 2rem 0; margin-bottom: 1rem; }
+        .hero h1 { font-size: 1.8rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { color: var(--text-muted); font-size: 0.9rem; }
+        
+        .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 700; border: 1px solid; margin: 0.2rem; }
+        .badge-primary { background: var(--primary-dim); color: var(--primary); border-color: var(--primary); }
+        .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--success); border-color: var(--success); }
+        .badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); border-color: var(--warning); }
+        
+        .section { margin-bottom: 2rem; }
+        .section-title { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
+        .section-title h2 { font-size: 1.2rem; }
+        .section-title .icon { font-size: 1.3rem; }
+        
+        .card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+            margin-bottom: 0.75rem; overflow: hidden;
+        }
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem; cursor: pointer; background: var(--surface);
+        }
+        .card-header:hover { background: var(--surface-light); }
+        .card-header h3 { font-size: 0.95rem; font-weight: 600; }
+        .card-content { display: none; padding: 0 1rem 1rem; animation: fadeIn 0.3s; }
+        .card.expanded .card-content { display: block; }
+        .expand-btn { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; transition: transform 0.3s; }
+        .card.expanded .expand-btn { transform: rotate(180deg); }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .tag { display: inline-block; padding: 0.1rem 0.4rem; background: var(--surface-light); border-radius: 4px; font-size: 0.7rem; color: var(--text-muted); margin-left: 0.3rem; }
+        .tag.beta { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .tag.free { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        
+        ul { list-style: none; }
+        li { padding: 0.5rem 0; padding-left: 1.2rem; position: relative; color: var(--text-muted); font-size: 0.9rem; border-bottom: 1px solid var(--border); }
+        li:last-child { border-bottom: none; }
+        li::before { content: "›"; position: absolute; left: 0; color: var(--primary); font-weight: bold; }
+        
+        .highlight { color: var(--primary); font-weight: 600; }
+        .price { color: var(--success); font-weight: 700; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+        @media (min-width: 640px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+        
+        .code-block {
+            background: #020617; border: 1px solid var(--border); border-radius: 8px;
+            margin: 0.75rem 0; overflow: hidden; font-family: monospace; font-size: 0.8rem;
+        }
+        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(255, 255, 255, 0.03); border-bottom: 1px solid var(--border); color: var(--accent); font-size: 0.7rem; text-transform: uppercase; }
+        .copy-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem; }
+        .copy-btn.copied { background: var(--success); }
+        pre { padding: 0.75rem; overflow-x: auto; color: #e2e8f0; white-space: pre-wrap; }
+        
+        .warning { background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); border-radius: 8px; padding: 0.75rem; margin: 0.75rem 0; font-size: 0.85rem; }
+        .error-box { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); border-radius: 8px; padding: 0.75rem; margin: 0.75rem 0; font-size: 0.85rem; }
+        .pro { border-left: 3px solid var(--success); }
+        .con { border-left: 3px solid var(--danger); }
+        
+        .spec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.75rem 0; }
+        .spec-item { background: var(--surface-light); padding: 0.6rem; border-radius: 6px; font-size: 0.85rem; }
+        .spec-label { color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.2rem; }
+        .spec-value { font-weight: 600; }
+        
+        footer { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.75rem; border-top: 1px solid var(--border); margin-top: 2rem; }
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <div class="nav-container">
+        <div class="logo">🔬 Research OS</div>
+        <button class="menu-btn" onclick="toggleMenu()">☰</button>
+    </div>
+</div>
+
+<div class="mobile-menu" id="mobileMenu">
+    <a href="#tools" onclick="closeMenu()">🛠️ Tools</a>
+    <a href="#modes" onclick="closeMenu()">🎛️ Die 4 Modi</a>
+    <a href="#pricing" onclick="closeMenu()">💰 Preise</a>
+    <a href="#limits" onclick="closeMenu()">🚦 Limits</a>
+</div>
+
+<div class="container">
+    
+    <div class="hero">
+        <h1>Kimi K2.5<br>Research Guide</h1>
+        <p>Technische Spezifikationen, Tools und Limits – nur bestätigte Fakten.</p>
+        <div style="margin-top: 1rem;">
+            <span class="badge badge-primary">Deep Research</span>
+            <span class="badge badge-success">Agent Swarm</span>
+        </div>
+    </div>
+
+    <!-- WICHTIGER HINWEIS -->
+    <div class="error-box">
+        <strong>⚠️ Hinweis zu Preisen:</strong> Kimi ändert Preise häufig und sie variieren je nach Region (China vs. International). Die genauen aktuellen Preise für Deutschland findest du nur auf <strong>kimi.com</strong> oder <strong>kimi.moonshot.cn</strong>.
+    </div>
+
+    <!-- PREISE (NUR BEKANNTE FAKTEN) -->
+    <section id="pricing" class="section">
+        <div class="section-title">
+            <span class="icon">💰</span>
+            <h2>Preispläne</h2>
+        </div>
+
+        <div class="card expanded">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>🆓 Free Tier (Adagio)</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li><span class="highlight">Kosten:</span> $0 / 0€</li>
+                    <li><span class="highlight">Context:</span> 2M Zeichen (~256K tokens)</li>
+                    <li><span class="highlight">Output:</span> 4,000 Zeichen/Antwort</li>
+                    <li><span class="highlight">Uploads:</span> 10/Tag</li>
+                    <li><span class="highlight">Queue:</span> Mögliche Wartezeit bei Peak Hours</li>
+                    <li class="pro"><strong>Reicht für:</strong> Die meisten akademischen Aufgaben</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>⚡ Bezahlpläne (Moderato, Allegretto, Vivace)</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li><span class="highlight">Namen:</span> Adagio (Free), Moderato, Allegretto, Vivace</li>
+                    <li><span class="highlight">Vorteile:</span> Keine Wartezeit, mehr Uploads, API-Zugang</li>
+                    <li><span class="highlight">Zahlung:</span> Kreditkarte oder regionale Methoden</li>
+                    <li class="con"><strong>Unsicher:</strong> Exacte Euro-Preise nicht öffentlich bekannt</li>
+                </ul>
+                <div class="warning">
+                    <strong>Aktion erforderlich:</strong> Besuche <strong>kimi.com</strong> und klicke auf "Pricing" oder "Upgrade" um die aktuellen Preise für deine Region zu sehen.
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>🎓 Alternative: Self-Hosting</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li><span class="highlight">Modelle:</span> Open Source auf HuggingFace (Modified MIT License)</li>
+                    <li><span class="highlight">Kosten:</span> Nur Strom + Hardware</li>
+                    <li><span class="highlight">Anforderung:</span> GPU oder ausreichend RAM</li>
+                    <li><span class="highlight">Tools:</span> vLLM, Ollama, llama.cpp</li>
+                </ul>
+                <div class="code-block">
+                    <div class="code-header">Ollama Beispiel <button class="copy-btn" onclick="copy(this)">📋</button></div>
+                    <pre>ollama run kimi-v1
+# oder ähnliche Community-Modelle</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TOOLS (BESTÄTIGTE FAKTEN) -->
+    <section id="tools" class="section">
+        <div class="section-title">
+            <span class="icon">🛠️</span>
+            <h2>Tools (Bestätigt)</h2>
+        </div>
+
+        <div class="card expanded">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>🔬 Deep Research</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li><span class="highlight">Web-Interface:</span> kimi.com (Chat-basiert)</li>
+                    <li><span class="highlight">Datenquellen:</span> Web, ArXiv, Google Scholar (bestätigt)</li>
+                    <li><span class="highlight">Limit:</span> 10 Tool-Aufrufe pro Antwort (Architektur-Limit)</li>
+                    <li><span class="highlight">Output:</span> Markdown, Charts als PNG</li>
+                    <li><span class="highlight">Keine Datei-Erstellung:</span> Nur Analyse, keine .docx/.xlsx Generierung hier</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>🤖 OK Computer (Agent Mode)</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li><span class="highlight">Separate URL:</span> kimi.com/agent (nicht im Chat)</li>
+                    <li><span class="highlight">Formate:</span> Word, Excel, PowerPoint, HTML (bestätigt)</li>
+                    <li><span class="highlight">Limit:</span> ~3 Uses/Tag im Free Tier</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>💻 Kimi Code CLI</h3>
+                <button class="expand-btn">▼</button>
+            </div>
+            <div class="card-content">
+                <ul>
+                    <li><span class="highlight">Installation:</span> <code>curl -LsSf https://code.kimi.com/install.sh | bash</code></li>
+                    <li><span class="highlight">Modelle:</span> k2-instruct, k2.5-thinking, k1.5-long-cot</li>
+                    <li><span class="highlight">Timeout:</span> 5 Minuten Shell-Ausführung</li>
+                    <li><span class="highlight">Limit:</span> 100KB File Read, 1000 Lines</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- DIE 4 MODI (BESTÄTIGT) -->
+    <section id="modes" class="section">
+        <div class="section-title">
+            <span class="icon">🎛️</span>
+            <h2>Die 4 Modi (Bestätigt)</h2>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header" onclick="toggleCard(this)">
+                    <h3>⚡ Instant</h3>
+                    <button class="expand-btn">▼</button>
+                </div>
+                <div class="card-content">
+                    <ul>
+                        <li>Kein Tool-Zugriff</li>
+                        <li>Schnellste Antwort</li>
+                        <li>Für einfache Fragen</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header" onclick="toggleCard(this)">
+                    <h3>🧠 Thinking</h3>
+                    <button class="expand-btn">▼</button>
+                </div>
+                <div class="card-content">
+                    <ul>
+                        <li>Chain-of-Thought sichtbar</li>
+                        <li>Mathematik & Logik</li>
+                        <li>Langsamer, präziser</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header" onclick="toggleCard(this)">
+                    <h3>🤖 Agent</h3>
+                    <button class="expand-btn">▼</button>
+                </div>
+                <div class="card-content">
+                    <ul>
+                        <li>Tool-Zugriff aktiviert</li>
+                        <li>Web, Python, Search</li>
+                        <li>200-300 Calls möglich</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header" onclick="toggleCard(this)">
+                    <h3>🐝 Swarm <span class="tag beta">Beta</span></h3>
+                    <button class="expand-btn">▼</button>
+                </div>
+                <div class="card-content">
+                    <ul>
+                        <li>Parallele Agents</li>
+                        <li>Nur in Bezahlplänen</li>
+                        <li>Abhängig von Verfügbarkeit</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- LIMITS (BESTÄTIGTE FAKTEN) -->
+    <section id="limits" class="section">
+        <div class="section-title">
+            <span class="icon">🚦</span>
+            <h2>Hard Limits (Bestätigt)</h2>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header" onclick="toggleCard(this)">
+                    <h3>⏱️ Timeouts</h3>
+                    <button class="expand-btn">▼</button>
+                </div>
+                <div class="card-content">
+                    <ul>
+                        <li>API: 2 Stunden (technisches Limit)</li>
+                        <li>Shell: 300 Sekunden (5 Min)</li>
+                        <li>Empfohlen: stream=true</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header" onclick="toggleCard(this)">
+                    <h3>🚦 Rate Limits</h3>
+                    <button class="expand-btn">▼</button>
+                </div>
+                <div class="card-content">
+                    <ul>
+                        <li>Free: 60 RPM / 150K TPM</li>
+                        <li>Paid: 120 RPM / 500K TPM</li>
+                        <li>HTTP 429 bei Überschreitung</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header" onclick="toggleCard(this)">
+                    <h3>💾 Files</h3>
+                    <button class="expand-btn">▼</button>
+                </div>
+                <div class="card-content">
+                    <ul>
+                        <li>Max: 1,000 Files / User</li>
+                        <li>Pro File: 100MB</li>
+                        <li>Gesamt: 10GB</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header" onclick="toggleCard(this)">
+                    <h3>👁️ Vision</h3>
+                    <button class="expand-btn">▼</button>
+                </div>
+                <div class="card-content">
+                    <ul>
+                        <li>Max: 4K (4096×2160)</li>
+                        <li>Formate: PNG, JPG, WebP</li>
+                        <li>Max Size: 100MB</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>Research OS | Nur bestätigte technische Fakten</p>
+        <p style="margin-top: 0.5rem;">Preise variieren – bitte auf kimi.com prüfen</p>
+    </footer>
+
+</div>
+
+<script>
+    function toggleMenu() {
+        document.getElementById('mobileMenu').classList.toggle('active');
+    }
+    function closeMenu() {
+        document.getElementById('mobileMenu').classList.remove('active');
+    }
+    function toggleCard(header) {
+        header.parentElement.classList.toggle('expanded');
+    }
+    function copy(btn) {
+        const text = btn.closest('.code-block').querySelector('pre').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            btn.textContent = '✓';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = '📋';
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('mobileMenu');
+        const btn = document.querySelector('.menu-btn');
+        if (menu.classList.contains('active') && !menu.contains(e.target) && !btn.contains(e.target)) {
+            menu.classList.remove('active');
+        }
+    });
+</script>
+
+</body>
+</html>
